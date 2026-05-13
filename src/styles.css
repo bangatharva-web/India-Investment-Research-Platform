@@ -1,6 +1,7 @@
 @import "tailwindcss" source(none);
-@source "../src";
 @import "tw-animate-css";
+
+@source "../src";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -110,19 +111,34 @@
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
+  * {
+    border-color: var(--color-border);
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-feature-settings: "ss01", "cv11";
   }
-  h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
-  .font-mono { font-family: var(--font-mono); }
-  .num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-family: var(--font-mono);
+  }
 }
-
-
 
 /* ===== STATUS / RATING BADGES ===== */
 
@@ -189,13 +205,25 @@
   }
 
   html,
-  body {
+  body,
+  #root {
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
     background: white !important;
   }
 
   body {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+
+  * {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+    box-shadow: none !important;
   }
 
   header,
@@ -210,60 +238,22 @@
     margin: 0 !important;
   }
 
-  section,
-  .card,
-  .rounded-xl,
-  .rounded-2xl {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  a::after {
-    content: "" !important;
-  }
-
-  * {
-    box-shadow: none !important;
-  }
-}
-@media print {
-  html,
-  body,
-  #root {
-    height: auto !important;
-    min-height: auto !important;
-    overflow: visible !important;
-  }
-
-  * {
-    opacity: 1 !important;
-    transform: none !important;
-    animation: none !important;
-    transition: none !important;
-  }
-
-  header,
-  nav {
-    position: static !important;
-  }
-
   main,
   section,
   div {
     overflow: visible !important;
   }
 
+  section,
+  .card,
+  .rounded-xl,
+  .rounded-2xl,
   .recharts-responsive-container {
     break-inside: avoid;
     page-break-inside: avoid;
   }
 
-  section {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  button {
-    display: none !important;
+  a::after {
+    content: "" !important;
   }
 }
