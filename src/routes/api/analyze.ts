@@ -56,13 +56,25 @@ export const Route = createFileRoute("/api/analyze")({
             };
   
             const rawFinancials = await getCompanyFinancials(symbol);
-  
-            const parsedFinancials =
-              parseFinancialStatements(rawFinancials);
-  
-            const financialMetrics =
-              generateFinancialMetrics(parsedFinancials);
-  
+
+            const parsedFinancials = rawFinancials
+            ? parseFinancialStatements(rawFinancials)
+            : [];
+
+            const financialMetrics = parsedFinancials.length > 0
+            ? generateFinancialMetrics(parsedFinancials)
+            : {
+                revenueGrowth: null,
+                grossMargin: null,
+                operatingMargin: null,
+                netMargin: null,
+                roe: null,
+                roce: null,
+                debtToEquity: null,
+                currentRatio: null,
+                freeCashFlow: null,
+            };
+            
             const peerSymbols = getPeerSymbols(symbol);
   
             const peerData = await Promise.all(
