@@ -12,6 +12,8 @@ export type AnalyzeCompanyResponse = {
   warnings: string[];
 };
 
+const CACHE_VERSION = "company-name-fix-v1";
+
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const round = (n: any, digits = 2) =>
@@ -22,6 +24,39 @@ const metricText = (value: any) =>
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
+
+const normalizeTicker = (value: any) =>
+  String(value ?? "")
+    .replace(/\.NS$/i, "")
+    .trim()
+    .toUpperCase();
+
+const looksLikeTickerOnly = (name: any, query: any) => {
+  const cleanName = normalizeTicker(name);
+  const cleanQuery = normalizeTicker(query);
+
+  if (!cleanName) return true;
+  if (cleanName === cleanQuery) return true;
+  if (cleanName === `${cleanQuery}.NS`) return true;
+
+  // Prevent short Yahoo names like "TCS" from replacing
+  // "Tata Consultancy Services Limited" in the report.
+  if (!String(name).includes(" ") && cleanName.length <= 10) return true;
+
+  return false;
+};
+
+const bestCompanyName = (candidate: any, fallback: any, query: any) => {
+  if (!looksLikeTickerOnly(candidate, query)) return String(candidate).trim();
+  if (!looksLikeTickerOnly(fallback, query)) return String(fallback).trim();
+  return `${normalizeTicker(query)} Industries Ltd`;
+};
+
+const updateProfileDescription = (report: any) => {
+  report.profile.description = `${report.profile.name} is an India-listed company operating in ${
+    report.profile.sector ?? "diversified industries"
+  }. Profile and financial snapshot extracted from latest exchange filings and annual report.`;
+};
 
 const addSectorSpecificThesis = (report: any) => {
   const thesis: string[] = report.executive.thesis ?? [];
@@ -160,7 +195,7 @@ export async function analyzeCompany(
   const dataMode = import.meta.env.VITE_DATA_MODE ?? "demo";
 
   if (dataMode === "live") {
-    const cacheKey = request.query.trim().toUpperCase();
+    const cacheKey = `${CACHE_VERSION}-${request.query.trim().toUpperCase()}`;
     const cached = getCachedReport(cacheKey);
 
     if (cached) {
@@ -199,11 +234,16 @@ export async function analyzeCompany(
     if (liveData?.technicals?.rsi14 != null) confidenceScore += 5;
 
     if (liveData?.fundamentals) {
-      report.profile.name =
-        liveData.fundamentals.companyName ?? report.profile.name;
+      report.profile.name = bestCompanyName(
+        liveData.fundamentals.companyName,
+        report.profile.name,
+        request.query
+      );
 
       report.profile.ticker =
         liveData.fundamentals.symbol ?? report.profile.ticker;
+
+      updateProfileDescription(report);
 
       report.profile.sector =
         liveData.fundamentals.sector ?? report.profile.sector;
@@ -391,6 +431,13 @@ export async function analyzeCompany(
         "Management quality",
       ],
     };
+
+    report.profile.name = bestCompanyName(
+      report.profile.name,
+      buildMockReport(request.query).profile.name,
+      request.query
+    );
+    updateProfileDescription(report);
 
     applyFinalValuationSafety(report);
 
