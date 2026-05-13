@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [
     tsConfigPaths(),
     tanstackStart(),
-    nitro(),
+    nitro({ preset: "vercel" }),
     viteReact(),
   ],
 });
