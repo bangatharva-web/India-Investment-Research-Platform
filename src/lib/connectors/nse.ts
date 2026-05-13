@@ -37,11 +37,17 @@ export type PriceCandle = {
       },
     });
   
+    const text = await res.text();
+  
     if (!res.ok) {
       throw new Error(`NSE request failed: ${res.status}`);
     }
   
-    return res.json();
+    if (text.trim().startsWith("<")) {
+      throw new Error("NSE returned HTML instead of JSON. Likely blocked.");
+    }
+  
+    return JSON.parse(text);
   }
   
   export async function getNseQuote(symbol: string) {
