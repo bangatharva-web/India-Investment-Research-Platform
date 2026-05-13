@@ -1,5 +1,4 @@
 import { buildMockReport, type Report } from "@/lib/mockReport";
-import { analyzeCompany as analyzeCompanyServer } from "@/services/analyzeCompany";
 import { getCachedReport, setCachedReport } from "@/lib/cache/reportCache";
 
 export type AnalyzeCompanyRequest = {
@@ -168,12 +167,22 @@ export async function analyzeCompany(
       return cached;
     }
 
-    const result: any = await (analyzeCompanyServer as any)({
-      data: {
+    const apiResponse = await fetch("/api/analyze", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
         query: request.query,
         modules: request.modules,
-      },
+      }),
     });
+    
+    if (!apiResponse.ok) {
+      throw new Error("Failed to analyze company");
+    }
+    
+    const result = await apiResponse.json();
 
     const report: any = buildMockReport(request.query);
 
