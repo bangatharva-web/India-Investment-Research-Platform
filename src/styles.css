@@ -1,0 +1,269 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-navy: var(--navy);
+  --color-navy-deep: var(--navy-deep);
+  --color-gold: var(--gold);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --font-display: "Source Serif 4", "Georgia", serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --shadow-elegant: 0 10px 40px -15px color-mix(in oklab, var(--navy-deep) 35%, transparent);
+  --shadow-card: 0 1px 3px color-mix(in oklab, var(--navy-deep) 8%, transparent), 0 1px 2px color-mix(in oklab, var(--navy-deep) 4%, transparent);
+}
+
+:root {
+  --radius: 0.5rem;
+  --background: oklch(0.99 0.003 240);
+  --foreground: oklch(0.18 0.04 250);
+
+  --navy-deep: oklch(0.22 0.07 255);
+  --navy: oklch(0.32 0.09 255);
+  --gold: oklch(0.78 0.13 75);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.04 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.04 250);
+
+  --primary: oklch(0.22 0.07 255);
+  --primary-foreground: oklch(0.99 0.003 240);
+  --secondary: oklch(0.96 0.01 250);
+  --secondary-foreground: oklch(0.22 0.07 255);
+  --muted: oklch(0.96 0.008 250);
+  --muted-foreground: oklch(0.5 0.02 255);
+  --accent: oklch(0.94 0.02 250);
+  --accent-foreground: oklch(0.22 0.07 255);
+
+  --destructive: oklch(0.55 0.22 27);
+  --destructive-foreground: oklch(0.99 0 0);
+  --success: oklch(0.55 0.15 155);
+  --success-foreground: oklch(0.99 0 0);
+  --warning: oklch(0.72 0.16 70);
+  --warning-foreground: oklch(0.18 0.04 250);
+
+  --border: oklch(0.91 0.01 255);
+  --input: oklch(0.91 0.01 255);
+  --ring: oklch(0.32 0.09 255);
+
+  --chart-1: oklch(0.32 0.09 255);
+  --chart-2: oklch(0.55 0.15 155);
+  --chart-3: oklch(0.78 0.13 75);
+  --chart-4: oklch(0.55 0.22 27);
+  --chart-5: oklch(0.55 0.12 220);
+
+  --sidebar: oklch(0.22 0.07 255);
+  --sidebar-foreground: oklch(0.99 0.003 240);
+  --sidebar-primary: oklch(0.78 0.13 75);
+  --sidebar-primary-foreground: oklch(0.18 0.04 250);
+  --sidebar-accent: oklch(0.32 0.09 255);
+  --sidebar-accent-foreground: oklch(0.99 0.003 240);
+  --sidebar-border: oklch(0.32 0.09 255);
+  --sidebar-ring: oklch(0.78 0.13 75);
+}
+
+.dark {
+  --background: oklch(0.15 0.03 255);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.2 0.04 255);
+  --card-foreground: oklch(0.98 0 0);
+  --primary: oklch(0.78 0.13 75);
+  --primary-foreground: oklch(0.18 0.04 250);
+  --border: oklch(1 0 0 / 10%);
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+  }
+  h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
+  .font-mono { font-family: var(--font-mono); }
+  .num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+}
+
+
+
+/* ===== STATUS / RATING BADGES ===== */
+
+.rating-buy {
+  color: rgb(34, 197, 94);
+}
+
+.rating-hold {
+  color: rgb(245, 158, 11);
+}
+
+.rating-sell {
+  color: rgb(239, 68, 68);
+}
+
+.badge-buy {
+  background: rgba(34, 197, 94, 0.15);
+  color: rgb(34, 197, 94);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.badge-hold {
+  background: rgba(245, 158, 11, 0.15);
+  color: rgb(245, 158, 11);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.badge-sell {
+  background: rgba(239, 68, 68, 0.15);
+  color: rgb(239, 68, 68);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.verified-badge,
+.estimated-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.verified-badge {
+  background: rgba(16, 185, 129, 0.15);
+  color: rgb(16, 185, 129);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.estimated-badge {
+  background: rgba(245, 158, 11, 0.15);
+  color: rgb(245, 158, 11);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+/* ===== PRINT / PDF EXPORT ===== */
+
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  html,
+  body {
+    background: white !important;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  header,
+  nav,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  section,
+  .card,
+  .rounded-xl,
+  .rounded-2xl {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  a::after {
+    content: "" !important;
+  }
+
+  * {
+    box-shadow: none !important;
+  }
+}
+@media print {
+  html,
+  body,
+  #root {
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+  }
+
+  * {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+
+  header,
+  nav {
+    position: static !important;
+  }
+
+  main,
+  section,
+  div {
+    overflow: visible !important;
+  }
+
+  .recharts-responsive-container {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  button {
+    display: none !important;
+  }
+}
