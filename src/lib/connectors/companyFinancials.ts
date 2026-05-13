@@ -1,28 +1,41 @@
+import { getScreenerCompanyData } from "./screener";
+
 export async function getCompanyFinancials(symbol: string) {
-    const yahooSymbol = symbol.includes(".") ? symbol : `${symbol}.NS`;
-  
-    try {
-      const response = await fetch(
-        `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(
-          yahooSymbol
-        )}?modules=incomeStatementHistory,balanceSheetHistory,cashflowStatementHistory`,
-        {
-          headers: {
-            "User-Agent": "Mozilla/5.0",
-            Accept: "application/json",
-          },
-        }
-      );
-  
-      if (!response.ok) {
-        console.warn(`Yahoo financials failed: ${response.status}`);
-        return null;
-      }
-  
-      const data = await response.json();
-      return data?.quoteSummary?.result?.[0] ?? null;
-    } catch (err) {
-      console.warn("Yahoo financials unavailable", err);
-      return null;
-    }
+  const cleanSymbol = symbol.replace(".NS", "").replace(".BO", "").toUpperCase();
+
+  try {
+    const data = await getScreenerCompanyData(cleanSymbol);
+
+    return {
+      symbol: cleanSymbol,
+      companyName: data.companyName,
+      financialText: data.rawText,
+      metrics: {
+        currentPrice: data.currentPrice,
+        marketCap: data.marketCap,
+        pe: data.pe,
+        bookValue: data.bookValue,
+        dividendYield: data.dividendYield,
+        roe: data.roe,
+        roce: data.roce,
+        faceValue: data.faceValue,
+      },
+      source: data.source,
+    };
+  } catch (err) {
+    console.warn("Verified financials unavailable", err);
+
+    return {
+      symbol: cleanSymbol,
+      companyName: cleanSymbol,
+      financialText: null,
+      metrics: null,
+      source: {
+        provider: "Screener.in",
+        url: `https://www.screener.in/company/${cleanSymbol}/consolidated/`,
+        retrievedAt: new Date().toISOString(),
+        status: "not_available_from_verified_source",
+      },
+    };
   }
+}

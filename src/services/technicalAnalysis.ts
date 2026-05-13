@@ -5,11 +5,11 @@ import {
     BollingerBands,
   } from "technicalindicators";
   
-  import { getYahooHistoricalPrices } from "@/lib/connectors/yahooFinance";
+  import { getNseHistoricalPrices } from "@/lib/connectors/nse";
   
   export async function generateTechnicalAnalysis(symbol: string) {
-    const candles = await getYahooHistoricalPrices(symbol);
-  
+    const candles = await getNseHistoricalPrices(symbol);
+    
     // ===== REMOVE INVALID YAHOO CANDLES =====
   
     const validCandles = candles.filter(
@@ -205,7 +205,7 @@ import {
       averageVolume,
   
       source: {
-        name: "Yahoo Finance",
+        name: "NSE India",
         retrievedAt:
           new Date().toISOString(),
       },
