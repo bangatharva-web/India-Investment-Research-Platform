@@ -1,63 +1,51 @@
 export async function getCompanyFundamentals(symbol: string) {
-    const yahooSymbol = symbol.includes(".")
-      ? symbol
-      : `${symbol}.NS`;
+    const yahooSymbol = symbol.includes(".") ? symbol : `${symbol}.NS`;
   
     const response = await fetch(
-      `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${yahooSymbol}?modules=price,summaryDetail,financialData,defaultKeyStatistics,assetProfile`
+      `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(
+        yahooSymbol
+      )}`,
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0",
+          Accept: "application/json",
+        },
+      }
     );
   
     if (!response.ok) {
-      throw new Error("Failed to fetch company fundamentals");
+      throw new Error(`Failed to fetch company fundamentals: ${response.status}`);
     }
   
     const data = await response.json();
+    const quote = data?.quoteResponse?.result?.[0];
   
-    const quote = data?.quoteSummary?.result?.[0];
+    if (!quote) {
+      throw new Error(`No Yahoo quote found for ${yahooSymbol}`);
+    }
   
     return {
       symbol: yahooSymbol,
   
-      companyName:
-        quote?.price?.longName ??
-        quote?.price?.shortName ??
-        symbol,
+      companyName: quote.longName ?? quote.shortName ?? symbol,
   
-      sector:
-        quote?.assetProfile?.sector ?? null,
+      sector: quote.sector ?? null,
+      industry: quote.industry ?? null,
   
-      industry:
-        quote?.assetProfile?.industry ?? null,
+      marketCap: quote.marketCap ?? null,
   
-      marketCap:
-        quote?.summaryDetail?.marketCap ?? null,
+      pe: quote.trailingPE ?? quote.forwardPE ?? null,
+      forwardPE: quote.forwardPE ?? null,
   
-      pe:
-        quote?.summaryDetail?.trailingPE ?? null,
+      dividendYield: quote.dividendYield ?? null,
   
-      forwardPE:
-        quote?.summaryDetail?.forwardPE ?? null,
+      roe: null,
+      revenueGrowth: null,
+      profitMargins: null,
   
-      dividendYield:
-        quote?.summaryDetail?.dividendYield ?? null,
-  
-      roe:
-        quote?.financialData?.returnOnEquity ?? null,
-  
-      revenueGrowth:
-        quote?.financialData?.revenueGrowth ?? null,
-  
-      profitMargins:
-        quote?.financialData?.profitMargins ?? null,
-  
-      currentPrice:
-        quote?.financialData?.currentPrice ?? null,
-  
-      targetMeanPrice:
-        quote?.financialData?.targetMeanPrice ?? null,
-  
-      recommendation:
-        quote?.financialData?.recommendationKey ?? null,
+      currentPrice: quote.regularMarketPrice ?? null,
+      targetMeanPrice: quote.targetMeanPrice ?? null,
+      recommendation: quote.recommendationKey ?? null,
   
       source: {
         provider: "Yahoo Finance",
