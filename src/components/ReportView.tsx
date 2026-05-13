@@ -5,7 +5,7 @@ import {
 } from "recharts";
 import {
   TrendingUp, TrendingDown, Minus, Download, ExternalLink, ShieldCheck,
-  AlertTriangle, Clock, Building2, Activity, Calculator, Users,
+  AlertTriangle, Clock, Building2, Activity, Calculator, Users, Leaf,
   Globe2, BarChart3, GitBranch, AlertOctagon, CalendarClock, Trophy,
 } from "lucide-react";
 import type { Report } from "@/lib/mockReport";
@@ -14,27 +14,6 @@ import { exportReportPdf } from "@/lib/exportPdf";
 
 const fmtCr = (n: number) => `₹${n.toLocaleString("en-IN")} Cr`;
 const fmtRs = (n: number) => `₹${n.toLocaleString("en-IN")}`;
-
-
-const fmtPeerMetric = (value: number | string, suffix = "") => {
-  if (value === null || value === undefined || value === "" || value === "NA") {
-    return "NA";
-  }
-
-  if (typeof value === "number") {
-    return `${value.toLocaleString("en-IN")}${suffix}`;
-  }
-
-  return `${value}${suffix}`;
-};
-
-const fmtMcap = (value: number | string) => {
-  if (value === null || value === undefined || value === "" || value === "NA") {
-    return "NA";
-  }
-
-  return typeof value === "number" ? value.toLocaleString("en-IN") : String(value);
-};
 
 const technicalConclusion = (t: Report["technicals"]) => {
   if (t.trend === "Uptrend" && t.signal === "Bullish") {
@@ -127,7 +106,7 @@ const NAV_LINKS = [
   ["exec", "Executive"], ["company", "Company"], ["business", "Business"],
   ["fin", "Financials"], ["ratios", "Ratios"], ["dupont", "DuPont"],
   ["valuation", "Valuation"], ["peers", "Peers"], ["moat", "Moat"],
-  ["mgmt", "Management"], ["quality", "Data Quality"], ["macro", "Macro"],
+  ["mgmt", "Management"], ["esg", "ESG"], ["macro", "Macro"],
   ["tech", "Technicals"], ["scenarios", "Scenarios"], ["risk", "Risks"],
   ["catalysts", "Catalysts"], ["verdict", "Verdict"], ["sources", "Sources"],
 ];
@@ -146,9 +125,7 @@ export default function ReportView({ report, onReset }: { report: Report; onRese
       <header className="sticky top-0 z-30 border-b border-border bg-navy-deep text-primary-foreground shadow-[var(--shadow-elegant)]">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-6 py-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-gold text-lg font-black tracking-tight text-navy-deep shadow">
-              {r.profile.ticker.slice(0, 2)}
-            </div>
+            <div className="flex h-9 w-9 items-center justify-center rounded bg-gold text-navy-deep font-bold">IR</div>
             <div>
               <div className="text-[11px] uppercase tracking-[0.2em] text-white/60">India Investment Research</div>
               <div className="text-sm font-semibold">{r.profile.name} <span className="text-white/50">· {r.profile.exchange}: {r.profile.ticker}</span></div>
@@ -195,7 +172,7 @@ export default function ReportView({ report, onReset }: { report: Report; onRese
           <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
             <div>
               <div className="mb-2 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                <ShieldCheck className="h-3.5 w-3.5" /> Public-filings-based research · AI-assisted narrative
+                <ShieldCheck className="h-3.5 w-3.5" /> Verified sources only · No fabricated data
               </div>
               <h1 className="text-4xl font-semibold tracking-tight text-navy-deep">{r.profile.name}</h1>
               <div className="mt-1 text-sm text-muted-foreground">{r.profile.industry} · ISIN {r.profile.isin}</div>
@@ -268,7 +245,6 @@ export default function ReportView({ report, onReset }: { report: Report; onRese
               <div className="mt-5 space-y-2 text-sm">
                 <div className="flex justify-between"><span className="text-white/60">Risk Profile</span><span className="font-semibold">{r.executive.conviction}</span></div>
                 <div className="flex justify-between"><span className="text-white/60">Margin of Safety</span><span className="font-semibold num">{r.valuation.mosPct}%</span></div>
-                <div className="flex justify-between"><span className="text-white/60">Confidence Score</span><span className="font-semibold num">{r.executive.confidenceScore ?? 72}/100</span></div>
                 <div className="flex justify-between"><span className="text-white/60">Intrinsic Value</span><span className="font-semibold num">{fmtRs(r.valuation.intrinsic)}</span></div>
               </div>
               <div className="mt-5 border-t border-white/10 pt-3 text-[11px] text-white/50">
@@ -281,12 +257,12 @@ export default function ReportView({ report, onReset }: { report: Report; onRese
         {/* Company overview */}
         <Section id="company" icon={Building2} kicker="Section 02" title="Company Overview">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Stat label="Exchange / Ticker" value={`${r.profile.exchange}: ${r.profile.ticker}`} />
-            <Stat label="Industry" value={r.profile.industry} />
-            <Stat label="Market Cap" value={fmtCr(r.profile.marketCapCr)} />
-            <Stat label="Data Confidence" value={`${r.executive.confidenceScore ?? 72}/100`} />
+            <Stat label="Promoter Holding" value={`${r.profile.promoterHolding}%`} />
+            <Stat label="FII Holding" value={`${r.profile.fiiHolding}%`} />
+            <Stat label="DII Holding" value={`${r.profile.diiHolding}%`} />
+            <Stat label="Public Holding" value={`${r.profile.publicHolding}%`} />
           </div>
-          <p className="mt-5 text-xs text-muted-foreground">Shareholding is not displayed unless directly verified from current filings. Source audit remains available in the appendix.</p>
+          <p className="mt-5 text-xs text-muted-foreground">Source: {r.sources[4].source} · Filed {r.sources[4].filingDate}</p>
         </Section>
 
         {/* Business */}
@@ -491,11 +467,11 @@ export default function ReportView({ report, onReset }: { report: Report; onRese
                   return (
                     <tr key={p.ticker} className={isSelf ? "bg-secondary" : ""}>
                       <Td><span className={isSelf ? "font-semibold text-navy-deep" : ""}>{p.name}</span></Td>
-                      <Td align="right" mono>{fmtMcap(p.mcapCr)}</Td>
-                      <Td align="right" mono>{fmtPeerMetric(p.revGrowth, "%")}</Td>
-                      <Td align="right" mono>{fmtPeerMetric(p.ebitdaMargin, "%")}</Td>
-                      <Td align="right" mono>{fmtPeerMetric(p.roe, "%")}</Td>
-                      <Td align="right" mono>{fmtPeerMetric(p.pe, "x")}</Td>
+                      <Td align="right" mono>{p.mcapCr.toLocaleString("en-IN")}</Td>
+                      <Td align="right" mono>{p.revGrowth}%</Td>
+                      <Td align="right" mono>{p.ebitdaMargin}%</Td>
+                      <Td align="right" mono>{p.roe}%</Td>
+                      <Td align="right" mono>{p.pe}x</Td>
                     </tr>
                   );
                 })}
@@ -531,7 +507,8 @@ export default function ReportView({ report, onReset }: { report: Report; onRese
               "Governance": r.management.governance,
               "Execution": r.management.execution,
               "Related-Party": r.management.relatedParty,
-              "Leadership Disclosure": "Detailed leadership and promoter metrics are shown only when verified from current filings.",
+              "Promoter Pledge": `${r.management.promoterPledge}%`,
+              "CEO Tenure": `${r.management.tenureYrs} years`,
             }).map(([k, v]) => (
               <div key={k} className="rounded-lg border border-border bg-card p-4">
                 <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{k}</div>
@@ -541,19 +518,23 @@ export default function ReportView({ report, onReset }: { report: Report; onRese
           </div>
         </Section>
 
-        {/* Data Quality */}
-        <Section id="quality" icon={ShieldCheck} kicker="Section 11" title="Data Quality & Limitations">
+        {/* ESG */}
+        <Section id="esg" icon={Leaf} kicker="Section 11" title="ESG Profile">
           <div className="grid gap-4 md:grid-cols-3">
-            <Stat label="AI Narrative" value={(r as any).dataQuality?.aiMode === "gemini" ? "Gemini" : "Fallback"} sub="Narrative engine" />
-            <Stat label="Template Sections" value={`${(r as any).dataQuality?.templateSections?.length ?? 0}`} sub="Clearly disclosed" />
-            <Stat label="Verified Sources" value={`${r.sources.length}`} sub="Source appendix" />
+            {[["Environmental", r.esg.environmental, "var(--success)"], ["Social", r.esg.social, "var(--navy)"], ["Governance", r.esg.governance, "var(--gold)"]].map(([k, v, c]) => (
+              <div key={k as string} className="rounded-lg border border-border bg-card p-5">
+                <div className="text-xs uppercase tracking-wider text-muted-foreground">{k as string}</div>
+                <div className="mt-1 flex items-baseline gap-1">
+                  <span className="text-3xl font-bold num text-navy-deep">{v as number}</span>
+                  <span className="text-sm text-muted-foreground">/ 100</span>
+                </div>
+                <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                  <div className="h-full" style={{ width: `${v}%`, background: c as string }} />
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="mt-4 rounded-lg border border-border bg-card p-5">
-            <h3 className="text-sm font-semibold text-navy-deep">Important Limitations</h3>
-            <p className="mt-2 text-sm text-foreground/70">
-              ESG scores, promoter shareholding, and detailed governance metrics are not shown unless verified source data is connected. Revenue mix, geographic mix, moat, and management commentary may remain template-assisted when primary disclosures are unavailable.
-            </p>
-          </div>
+          <p className="mt-4 text-sm text-foreground/70">{r.esg.commentary}</p>
         </Section>
 
         {/* Macro */}
@@ -682,7 +663,6 @@ export default function ReportView({ report, onReset }: { report: Report; onRese
                 <p><strong className="text-white">Thesis.</strong> {r.executive.thesis[0]} Returns are anchored by a quality balance sheet (D/E {r.ratios.debtEquity}x, interest cover {r.ratios.interestCoverage}x) and capital efficiency (ROIC {r.ratios.roic}%, ROCE {r.ratios.roce}%).</p>
                 <p><strong className="text-white">Valuation.</strong> Triangulating DCF ({fmtRs(r.valuation.dcf)}), EV/EBITDA ({fmtRs(r.valuation.evEbitda)}), and intrinsic value ({fmtRs(r.valuation.intrinsic)}) yields a base-case target of {fmtRs(r.executive.targetPrice)} with {r.valuation.mosPct}% margin of safety.</p>
                 <p><strong className="text-white">Risk-reward.</strong> Bull/Base/Bear payoff: {fmtRs(r.scenarios[0].targetPrice)} / {fmtRs(r.scenarios[1].targetPrice)} / {fmtRs(r.scenarios[2].targetPrice)} with probability-weighted skew favouring upside.</p>
-                <p><strong className="text-white">Confidence.</strong> Current confidence score is {r.executive.confidenceScore ?? 72}/100, based on available live data, technicals, parsed financials, and narrative availability.</p>
                 <p><strong className="text-white">Time horizon.</strong> 12–18 months. Target price uses a blended valuation view across DCF, EV/EBITDA, P/E, and P/B outputs.</p>
               </div>
             </div>
