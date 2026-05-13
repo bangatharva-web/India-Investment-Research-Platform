@@ -13,35 +13,67 @@ function cleanSymbol(symbol: string) {
   return symbol.replace(".NS", "").toUpperCase().trim();
 }
 
-async function getNseCompanyName(symbol: string) {
-  const clean = cleanSymbol(symbol);
-
-  try {
-    const response = await fetch(
-      `https://www.nseindia.com/api/quote-equity?symbol=${encodeURIComponent(clean)}`,
-      {
+async function getScreenerCompanyName(symbol: string) {
+    const clean = cleanSymbol(symbol);
+  
+    try {
+      const response = await fetch(`https://www.screener.in/company/${clean}/`, {
         headers: {
           "User-Agent": "Mozilla/5.0",
-          Accept: "application/json",
-          Referer: "https://www.nseindia.com/",
+          Accept: "text/html",
         },
-      }
-    );
-
-    if (!response.ok) return clean;
-
-    const data = await response.json();
-
-    return (
-      data?.info?.companyName ||
-      data?.metadata?.companyName ||
-      data?.securityInfo?.issuerName ||
-      clean
-    );
-  } catch {
-    return clean;
+      });
+  
+      if (!response.ok) return null;
+  
+      const html = await response.text();
+  
+      const titleMatch = html.match(/<title>(.*?)<\/title>/i);
+      const h1Match = html.match(/<h1[^>]*>\s*(.*?)\s*<\/h1>/i);
+  
+      const rawName =
+        h1Match?.[1]?.replace(/<[^>]+>/g, "").trim() ||
+        titleMatch?.[1]?.split("share price")[0]?.trim() ||
+        null;
+  
+      return rawName || null;
+    } catch {
+      return null;
+    }
   }
-}
+  
+  async function getNseCompanyName(symbol: string) {
+    const clean = cleanSymbol(symbol);
+  
+    const screenerName = await getScreenerCompanyName(clean);
+    if (screenerName) return screenerName;
+  
+    try {
+      const response = await fetch(
+        `https://www.nseindia.com/api/quote-equity?symbol=${encodeURIComponent(clean)}`,
+        {
+          headers: {
+            "User-Agent": "Mozilla/5.0",
+            Accept: "application/json",
+            Referer: "https://www.nseindia.com/",
+          },
+        }
+      );
+  
+      if (!response.ok) return clean;
+  
+      const data = await response.json();
+  
+      return (
+        data?.info?.companyName ||
+        data?.metadata?.companyName ||
+        data?.securityInfo?.issuerName ||
+        clean
+      );
+    } catch {
+      return clean;
+    }
+  }
 
 function getPeerSymbols(symbol: string) {
   const clean = cleanSymbol(symbol);
