@@ -12,7 +12,7 @@ export type AnalyzeCompanyResponse = {
   warnings: string[];
 };
 
-const CACHE_VERSION = "company-name-fix-v1";
+const CACHE_VERSION = "nse-company-name-fix-v2";
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -49,7 +49,7 @@ const looksLikeTickerOnly = (name: any, query: any) => {
 const bestCompanyName = (candidate: any, fallback: any, query: any) => {
   if (!looksLikeTickerOnly(candidate, query)) return String(candidate).trim();
   if (!looksLikeTickerOnly(fallback, query)) return String(fallback).trim();
-  return `${normalizeTicker(query)} Industries Ltd`;
+  return normalizeTicker(query);
 };
 
 const updateProfileDescription = (report: any) => {
@@ -214,9 +214,10 @@ export async function analyzeCompany(
     });
     
     if (!apiResponse.ok) {
-      throw new Error("Failed to analyze company");
+      const errorText = await apiResponse.text();
+      throw new Error(errorText || "Failed to analyze company");
     }
-    
+
     const result = await apiResponse.json();
 
     const report: any = buildMockReport(request.query);
