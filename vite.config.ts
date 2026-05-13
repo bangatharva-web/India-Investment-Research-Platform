@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import { defineConfig } from "vite";
 import viteReact from "@vitejs/plugin-react";
@@ -9,8 +10,16 @@ export default defineConfig({
   plugins: [
     tailwindcss(),
     tsConfigPaths(),
-    tanstackStart(),
-    nitro(),
+    tanstackStart({
+      serverFns: {
+        generateFunctionId: ({ filename, functionName }) => {
+          return createHash("sha1")
+            .update(`${filename}--${functionName}`)
+            .digest("hex");
+        },
+      },
+    }),
+    nitro({ preset: "vercel" }),
     viteReact(),
   ],
 });
