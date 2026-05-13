@@ -9,8 +9,42 @@ import { generateTechnicalAnalysis } from "@/services/technicalAnalysis";
 
 const aiCache = new Map<string, any>();
 
+function cleanSymbol(symbol: string) {
+  return symbol.replace(".NS", "").toUpperCase().trim();
+}
+
+async function getNseCompanyName(symbol: string) {
+  const clean = cleanSymbol(symbol);
+
+  try {
+    const response = await fetch(
+      `https://www.nseindia.com/api/quote-equity?symbol=${encodeURIComponent(clean)}`,
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0",
+          Accept: "application/json",
+          Referer: "https://www.nseindia.com/",
+        },
+      }
+    );
+
+    if (!response.ok) return clean;
+
+    const data = await response.json();
+
+    return (
+      data?.info?.companyName ||
+      data?.metadata?.companyName ||
+      data?.securityInfo?.issuerName ||
+      clean
+    );
+  } catch {
+    return clean;
+  }
+}
+
 function getPeerSymbols(symbol: string) {
-  const clean = symbol.replace(".NS", "").toUpperCase();
+  const clean = cleanSymbol(symbol);
 
   const peerMap: Record<string, string[]> = {
     TCS: ["INFY", "HCLTECH", "WIPRO"],
@@ -23,12 +57,14 @@ function getPeerSymbols(symbol: string) {
   return peerMap[clean] ?? [];
 }
 
-function fallbackFundamentals(symbol: string) {
-  const yahooSymbol = symbol.includes(".") ? symbol : `${symbol}.NS`;
+async function fallbackFundamentals(symbol: string) {
+  const clean = cleanSymbol(symbol);
+  const yahooSymbol = symbol.includes(".") ? symbol : `${clean}.NS`;
+  const displayName = await getNseCompanyName(symbol);
 
   return {
     symbol: yahooSymbol,
-    companyName: symbol,
+    companyName: displayName,
     sector: null,
     industry: null,
     marketCap: null,
@@ -42,10 +78,10 @@ function fallbackFundamentals(symbol: string) {
     targetMeanPrice: null,
     recommendation: null,
     source: {
-      provider: "Yahoo Finance",
-      url: `https://finance.yahoo.com/quote/${yahooSymbol}`,
+      provider: "NSE India / Yahoo Finance fallback",
+      url: `https://www.nseindia.com/get-quotes/equity?symbol=${clean}`,
       retrievedAt: new Date().toISOString(),
-      status: "not_available_from_verified_source",
+      status: "company_name_resolved_from_nse_if_available",
     },
   };
 }
@@ -56,7 +92,8 @@ function fallbackTechnicals() {
     momentum: "Not reliable from available data",
     signal: "Not reliable from available data",
     conclusion: "Technical data unavailable from verified source.",
-    interpretation: "Technical indicators could not be generated because live market data was unavailable.",
+    interpretation:
+      "Technical indicators could not be generated because live market data was unavailable.",
   };
 }
 
@@ -66,15 +103,25 @@ export const Route = createFileRoute("/api/analyze")({
       POST: async ({ request }: { request: Request }) => {
         try {
           const data = await request.json();
+
           const apiKey = process.env.GEMINI_API_KEY;
           const symbol = data.query;
 
-          let fundamentals: any = fallbackFundamentals(symbol);
+          let fundamentals: any = await fallbackFundamentals(symbol);
           let rawFinancials: any = null;
           let technicals: any = fallbackTechnicals();
 
           try {
-            fundamentals = await getCompanyFundamentals(symbol);
+            const fetchedFundamentals = await getCompanyFundamentals(symbol);
+
+            fundamentals = {
+              ...fundamentals,
+              ...fetchedFundamentals,
+              companyName:
+                fetchedFundamentals?.companyName ||
+                fundamentals.companyName ||
+                cleanSymbol(symbol),
+            };
           } catch (e) {
             console.warn("Fundamentals fetch failed", e);
           }
@@ -122,26 +169,35 @@ export const Route = createFileRoute("/api/analyze")({
           const peerData = await Promise.all(
             peerSymbols.map(async (peerSymbol) => {
               try {
-                const peerFundamentals = await getCompanyFundamentals(peerSymbol);
+                const peerFallback = await fallbackFundamentals(peerSymbol);
+                const peerFundamentals =
+                  await getCompanyFundamentals(peerSymbol);
+
+                const mergedPeer = {
+                  ...peerFallback,
+                  ...peerFundamentals,
+                  companyName:
+                    peerFundamentals?.companyName ||
+                    peerFallback.companyName ||
+                    peerSymbol,
+                };
 
                 return {
-                  name: peerFundamentals?.companyName ?? peerSymbol,
-                  ticker: peerFundamentals?.symbol ?? peerSymbol,
-                  mcapCr: peerFundamentals?.marketCap
-                    ? Math.round(peerFundamentals.marketCap / 10000000)
+                  name: mergedPeer.companyName,
+                  ticker: mergedPeer.symbol,
+                  mcapCr: mergedPeer.marketCap
+                    ? Math.round(mergedPeer.marketCap / 10000000)
                     : null,
-                  revGrowth: peerFundamentals?.revenueGrowth
-                    ? +(peerFundamentals.revenueGrowth * 100).toFixed(1)
+                  revGrowth: mergedPeer.revenueGrowth
+                    ? +(mergedPeer.revenueGrowth * 100).toFixed(1)
                     : null,
-                  margin: peerFundamentals?.profitMargins
-                    ? +(peerFundamentals.profitMargins * 100).toFixed(1)
+                  margin: mergedPeer.profitMargins
+                    ? +(mergedPeer.profitMargins * 100).toFixed(1)
                     : null,
-                  roe: peerFundamentals?.roe
-                    ? +(peerFundamentals.roe * 100).toFixed(1)
+                  roe: mergedPeer.roe
+                    ? +(mergedPeer.roe * 100).toFixed(1)
                     : null,
-                  pe: peerFundamentals?.pe
-                    ? +peerFundamentals.pe.toFixed(1)
-                    : null,
+                  pe: mergedPeer.pe ? +mergedPeer.pe.toFixed(1) : null,
                 };
               } catch {
                 return null;
@@ -151,9 +207,9 @@ export const Route = createFileRoute("/api/analyze")({
 
           const cleanPeerData = peerData.filter(Boolean);
 
-          const cacheKey = `${symbol}-${financialMetrics?.revenueGrowth ?? "na"}-${
-            liveData.technicals?.trend ?? "na"
-          }`;
+          const cacheKey = `${symbol}-${
+            financialMetrics?.revenueGrowth ?? "na"
+          }-${liveData.technicals?.trend ?? "na"}`;
 
           let aiJson: any = aiCache.get(cacheKey) ?? null;
 
@@ -167,13 +223,19 @@ export const Route = createFileRoute("/api/analyze")({
             const prompt = `
 Return ONLY valid compact JSON. No markdown.
 
-Company: ${liveData.fundamentals?.companyName ?? symbol}
+Company: ${liveData.fundamentals?.companyName ?? cleanSymbol(symbol)}
 Ticker: ${liveData.fundamentals?.symbol ?? symbol}
 Sector: ${liveData.fundamentals?.sector ?? "Not reliable from available data"}
 Industry: ${liveData.fundamentals?.industry ?? "Not reliable from available data"}
 
-Price: ${liveData.fundamentals?.currentPrice ?? "Not reliable from available data"}
-MarketCap: ${liveData.fundamentals?.marketCap ?? "Not reliable from available data"}
+Price: ${
+              liveData.fundamentals?.currentPrice ??
+              "Not reliable from available data"
+            }
+MarketCap: ${
+              liveData.fundamentals?.marketCap ??
+              "Not reliable from available data"
+            }
 PE: ${liveData.fundamentals?.pe ?? "Not reliable from available data"}
 
 Return this JSON:
